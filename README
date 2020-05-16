@@ -1,0 +1,42 @@
+如何使用Forca:
+1. Forca是一个client使用RDMA单边访问server的框架；为方便测试，代码提供了四种访问模式，具体可在db.h中看到。
+2. 使用方法： 用户需定义自己的client类、server类，基于Forca实现自己需要的功能，然后再为client类、server类写对应的运行程序。
+   client类需要继承forca-client.h中的类并写上自己需要的功能代码，在这些代码中可调用RDMA单边访问server；
+   而server类则需要继承forca-server.h中的类并定义process()方法，用来处理从client收到的请求。具体可在forca-client.h以及forca-server.h中看到。
+3. 此前已使用Forca实现了ForcaKV，四种模式都有使用，可作为Forca使用样例。
+   ForcaKV类：evalfile/header包含了ForcaKV四种访问模式的client类、server类；
+   client端将其中一种模式的client类文件复制到代码目录下，命名为forcakv-client.h即可使用对应的类；
+   server端将其中一种模式的server类文件复制到代码目录下，命名为forcakv-server.h即可使用对应的类；
+   NOTE0：client类和server类的访问模式需要一样！否则会出现不可预料的错误。
+   ForcaKV的运行程序在evalfile/main中，其中包含了多种workload对应的client运行程序以及一个server运行程序，
+   在有forcakv-client.h的情况下，client端将其中一种workload的文件复制到代码目录下，命名为kvclient.cpp，
+   运行./runtest-client.sh即可运行client（./run-n-client.sh m可同时运行m个client）；
+   在有forcakv-server.h的情况下，server端将文件复制到代码目录下，命名为kvserver.cpp，
+   运行./runtest-server.sh即可运行server(每次运行runtest-server.h都会重置NVM，需要保留之前数据的话运行make server -> ./server)；
+   要使用ForcaKV，需先运行server端，再运行client端。
+   NOTE1：以上命名要求是因为Makefile中指定了文件的名字，如有需求可修改。
+   NOTE2：server需部署在第8台机器上(10.0.0.8),如有变化需修改network.h中的server IP地址。
+
+Pilaf的使用：
+   evalfile/header/pilaf 中有实现pilaf的头文件，
+   Pilaf与Forca访问机制不同，不能基于Forca实现，因此修改了forca-client.h及forca-server.h。
+   client端要使用Pilaf,需用forca-client-pilaf.h替换forca-client.h，
+   server端需用forca-server-pilaf.h替换forca-server.h；
+   替换后，其使用方式与ForcaKV完全相同。
+
+各源文件内容：
+	allocator.h/allocator.cpp: Forca使用到的分配器
+	const.h: 一些常数
+	db.h/db.cpp: Forca核心功能，包括recovery、log management、content search等
+	gc.cpp/gc.h: 垃圾回收
+	global.cpp/global.h: 全局变量 （NVM类）
+	ib.cpp/ib.h: 包装infiniband的功能，提供一些接口
+	lock.cpp/lock.h: Forca使用到的锁
+	network.cpp/network.h: 提供网络功能，包括建立连接、消息传递、单边访问等
+	nvm.cpp/nvm.h: 管理NVM（其实就是一个文件nvm.sim），提供一些使用接口
+	object.cpp/object.h: object的数据结构及相关辅助函数
+	OCCHash.cpp/OCCHash.h: Forca使用的哈希表
+	types.h: 一些类型
+	util.h: 一些辅助函数
+   
+
